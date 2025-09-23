@@ -85,3 +85,10 @@ add_llvm_component_library(LLVMMC
 
 add_subdirectory(MCParser)
 add_subdirectory(MCDisassembler)
+set_source_files_properties(
+  MCInst.cpp
+  MCAsmStreamer.cpp
+  MCStreamer.cpp
+  MCSection.cpp
+  PROPERTIES COMPILE_FLAGS "-g -O0 -DLLVM_ENABLE_DUMP")
+

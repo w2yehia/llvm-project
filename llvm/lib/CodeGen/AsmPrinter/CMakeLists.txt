@@ -47,3 +47,7 @@ add_llvm_component_library(LLVMAsmPrinter
   Target
   TargetParser
   )
+set_source_files_properties(
+  AsmPrinter.cpp
+  PROPERTIES COMPILE_FLAGS "-g -O0 -DLLVM_ENABLE_DUMP")
+

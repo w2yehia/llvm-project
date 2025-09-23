@@ -295,3 +295,7 @@ add_subdirectory(SelectionDAG)
 add_subdirectory(AsmPrinter)
 add_subdirectory(MIRParser)
 add_subdirectory(GlobalISel)
+
+set_source_files_properties(
+  MachineInstr.cpp
+  PROPERTIES COMPILE_FLAGS "-g -O0 -DLLVM_ENABLE_DUMP")

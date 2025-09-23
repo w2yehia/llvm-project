@@ -88,3 +88,7 @@ add_subdirectory(AsmParser)
 add_subdirectory(Disassembler)
 add_subdirectory(MCTargetDesc)
 add_subdirectory(TargetInfo)
+set_source_files_properties(
+  PPCAsmPrinter.cpp
+  PPCMCInstLower.cpp
+  PROPERTIES COMPILE_FLAGS "-g -O0 -DLLVM_ENABLE_DUMP")

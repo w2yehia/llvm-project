@@ -141,3 +141,7 @@ target_link_libraries(clangBasic
   PRIVATE
   ${LLVM_ATOMIC_LIB}
 )
+
+set_source_files_properties(
+  TargetInfo.cpp Targets/X86.cpp Targets.cpp Targets/PPC.cpp
+  PROPERTIES COMPILE_FLAGS "-g -O0")

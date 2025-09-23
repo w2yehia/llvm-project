@@ -80,6 +80,9 @@
 using namespace clang;
 using namespace CodeGen;
 
+void pdecl(const Decl* D) { D->dump(); }
+void pgdecl(const GlobalDecl &GD) { GD.getDecl()->dump(); }
+
 static llvm::cl::opt<bool> LimitedCoverage(
     "limited-coverage-experimental", llvm::cl::Hidden,
     llvm::cl::desc("Emit limited coverage mapping information (experimental)"));

@@ -87,6 +87,9 @@ using namespace PatternMatch;
 
 #define DEBUG_TYPE "asmprinter"
 
+void xpm(const Module *M) { M->dump(); }
+void xpi(const Instruction *I) { I->dump(); }
+void xpv(const Value *V) { V->dump(); }
 STATISTIC(NumTOCEntries, "Number of Total TOC Entries Emitted.");
 STATISTIC(NumTOCConstPool, "Number of Constant Pool TOC Entries.");
 STATISTIC(NumTOCGlobalInternal,

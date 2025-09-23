@@ -149,3 +149,7 @@ add_clang_library(clangAST
   # These generated headers are included transitively.
   target_parser_gen
   )
+set_source_files_properties(
+  ASTContext.cpp
+  PROPERTIES COMPILE_FLAGS "-g -O0")
+

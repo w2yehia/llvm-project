@@ -173,3 +173,76 @@ add_clang_library(clangCodeGen
   clangLex
   clangSerialization
   )
+
+set_source_files_properties(
+  ABIInfo.cpp
+  ABIInfoImpl.cpp
+  BackendUtil.cpp
+  CGAtomic.cpp
+  CGBlocks.cpp
+  CGBuiltin.cpp
+  CGCUDANV.cpp
+  CGCUDARuntime.cpp
+  CGCXX.cpp
+  CGCXXABI.cpp
+  CGCall.cpp
+  CGClass.cpp
+  CGCleanup.cpp
+  CGCoroutine.cpp
+  CGDebugInfo.cpp
+  CGDecl.cpp
+  CGDeclCXX.cpp
+  CGException.cpp
+  CGExpr.cpp
+  CGExprAgg.cpp
+  CGExprCXX.cpp
+  CGExprComplex.cpp
+  CGExprConstant.cpp
+  CGExprScalar.cpp
+  CGGPUBuiltin.cpp
+  CGHLSLRuntime.cpp
+  CGHLSLBuiltins.cpp
+  CGLoopInfo.cpp
+  CGNonTrivialStruct.cpp
+  CGObjC.cpp
+  CGObjCGNU.cpp
+  CGObjCMac.cpp
+  CGObjCRuntime.cpp
+  CGOpenCLRuntime.cpp
+  CGOpenMPRuntime.cpp
+  CGOpenMPRuntimeGPU.cpp
+  CGPointerAuth.cpp
+  CGRecordLayoutBuilder.cpp
+  CGStmt.cpp
+  CGStmtOpenMP.cpp
+  CGVTT.cpp
+  CGVTables.cpp
+  CodeGenABITypes.cpp
+  CodeGenAction.cpp
+  CodeGenFunction.cpp
+  CodeGenModule.cpp
+  CodeGenPGO.cpp
+  CodeGenSYCL.cpp
+  CodeGenTBAA.cpp
+  CodeGenTypes.cpp
+  ConstantInitBuilder.cpp
+  CoverageMappingGen.cpp
+  ItaniumCXXABI.cpp
+  HLSLBufferLayoutBuilder.cpp
+  LinkInModulesPass.cpp
+  MacroPPCallbacks.cpp
+  MicrosoftCXXABI.cpp
+  ModuleBuilder.cpp
+  ObjectFilePCHContainerWriter.cpp
+  PatternInit.cpp
+  SanitizerMetadata.cpp
+  TargetBuiltins/ARM.cpp
+  TargetBuiltins/PPC.cpp
+  TargetBuiltins/RISCV.cpp
+  TargetBuiltins/X86.cpp
+  TargetInfo.cpp
+  Targets/AArch64.cpp
+  Targets/ARM.cpp
+  Targets/PPC.cpp
+  Targets/X86.cpp
+  PROPERTIES COMPILE_FLAGS "-g -O0")

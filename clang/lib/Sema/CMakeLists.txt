@@ -117,3 +117,5 @@ add_clang_library(clangSema
   clangLex
   clangSupport
   )
+
+set_source_files_properties(SemaPPC.cpp PROPERTIES COMPILE_FLAGS "-g -O0")
