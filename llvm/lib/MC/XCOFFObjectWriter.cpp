@@ -20,6 +20,7 @@
 #include "llvm/MC/MCValue.h"
 #include "llvm/MC/MCXCOFFObjectWriter.h"
 #include "llvm/MC/StringTableBuilder.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/EndianStream.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
@@ -48,6 +49,11 @@ namespace {
 
 constexpr unsigned DefaultSectionAlign = 4;
 constexpr int16_t MaxSectionIndex = INT16_MAX;
+
+static cl::opt<bool> DisableRelocSort(
+    "disable-reloc-sort", cl::init(true),
+    cl::desc("disable sorting relocation entries before writing to disk."),
+    cl::Hidden);
 
 // Packs the csect's alignment and type into a byte.
 uint8_t getEncodedType(const MCSectionXCOFF *);
@@ -1123,16 +1129,21 @@ void XCOFFWriter::writeRelocation(XCOFFRelocation Reloc,
 }
 
 void XCOFFWriter::writeRelocations() {
-  for (const auto *Section : Sections) {
+  for (auto *Section : Sections) {
     if (Section->Index == SectionEntry::UninitializedIndex)
       // Nothing to write for this Section.
       continue;
 
-    for (const auto *Group : Section->Groups) {
+    for (auto *Group : Section->Groups) {
       if (Group->empty())
         continue;
 
-      for (const auto &Csect : *Group) {
+      for (auto &Csect : *Group) {
+        if (!DisableRelocSort)
+          std::sort(Csect.Relocations.begin(), Csect.Relocations.end(),
+                    [](const XCOFFRelocation &a, const XCOFFRelocation &b) {
+                      return a.FixupOffsetInCsect < b.FixupOffsetInCsect;
+                    });
         for (const auto Reloc : Csect.Relocations)
           writeRelocation(Reloc, Csect);
       }
