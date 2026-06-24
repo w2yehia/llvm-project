@@ -1,0 +1,43 @@
+aix-shared-lib-tls-model-opt|0|option '-maix-shared-lib-tls-model-opt' cannot be specified on this target|||1|||0|unrecognized command-line option ‘-maix-shared-lib-tls-model-opt’||
+aix-small-local-dynamic-tls|0|option '-maix-small-local-[exec|dynamic]-tls' cannot be specified on this target|||1|||0|unrecognized command-line option ‘-maix-small-local-dynamic-tls’||
+aix-small-local-exec-tls|0|option '-maix-small-local-[exec|dynamic]-tls' cannot be specified on this target|||1|||0|unrecognized command-line option ‘-maix-small-local-exec-tls’||
+altivec|1|||1|||1||
+avoid-indexed-addresses|0|'-mavoid-indexed-addresses'|||0|'-mavoid-indexed-addresses'|||1||
+cmpb|1|||1|||1||
+crbits|1|||1|||0|unrecognized command-line option ‘-mcrbits’||
+crypto|1|||1|||1||
+direct-move|1|||1|||1||
+dlmzb|0|'-mdlmzb'|||0|'-mdlmzb'|||1||
+efpu2|0|SPE is only supported for 32-bit targets.|||0|clang frontend command failed due to signal (use -v to see invocation)|||0|unrecognized command-line option ‘-mefpu2’||
+float128|1|||1|||1||
+fprnd|1|||1|||1||
+friz|0|'-mfriz'|||0|'-mfriz'|||1||
+hard-dfp|0|'-mhard-dfp'|||0|'-mhard-dfp'|||1||
+htm|1|||1|||1||
+invariant-function-descriptors|1|||1|||0|unrecognized command-line option ‘-minvariant-function-descriptors’||
+isel|1|||1|||1||
+longcall|1|||1|||1||
+mfcrf|1|||1|||1||
+mfocrf|1|||1|||0|unrecognized command-line option ‘-mmfocrf’; did you mean ‘-mmfcrf’?||
+mma|1|power10||1|power10||1|power10|
+mulhw|0|'-mmulhw'|||0|'-mmulhw'|||1||
+multiple|0|'-mmultiple'|||0|'-mmultiple'|||1||
+paired|0|'-mpaired'|||0|'-mpaired'|||0|unrecognized command-line option ‘-mpaired’||
+paired-vector-memops|1|power10||1|power10||0|unrecognized command-line option ‘-mpaired-vector-memops’||
+pcrel|1|power10||1|power10||1|power10|
+popcntb|0|unknown argument '-mpopcntb'; did you mean '-mpopcntd'?|||0|unknown argument '-mpopcntb'; did you mean '-mpopcntd'?|||1||
+popcntd|1|||1|||1||
+power8-vector|1|||1|||1||
+power9-vector|1|||1|||1||
+power10-vector|1|||1|||0|unrecognized command-line option ‘-mpower10-vector’; did you mean ‘-mpower8-vector’?||
+powerpc-gfxopt|0|'-mpowerpc-gfxopt'|||0|'-mpowerpc-gfxopt'|||1||
+powerpc-gpopt|0|'-mpowerpc-gpopt'|||0|'-mpowerpc-gpopt'|||1||
+prefixed|1|power10||1|power10||1|power10|
+privileged|1|||1|power8||1||
+recip-precision|0|'-mrecip-precision'|||0|'-mrecip-precision'|||1||
+rop-protect|1|||1|power8||1||
+secure-plt|1|||1|||1||
+spe|0|SPE is only supported for 32-bit targets.|||0|clang frontend command failed due to signal (use -v to see invocation)|||0|unrecognized command-line option ‘-mspe’||
+string|0|'-mstring'|||0|'-mstring'|||1||
+update|0|'-mupdate'|||0|'-mupdate'|||1||
+vsx|1|||1|||1||
