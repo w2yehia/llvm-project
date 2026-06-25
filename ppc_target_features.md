@@ -10,35 +10,37 @@ This list contains all possible feature strings that can be used with the `targe
 // by clang on __attribute__((target("FEATURE"))). See test_target_attribute_all.sh for verification.
 //
 // Format: 
-// feature_name       // clang-linux clang-aix gcc-linux // __builtin_cpu_supports mapping and notes
- altivec                         // 1   1   1   // __builtin_cpu_supports("altivec")
- htm                             // 1   1   1   // __builtin_cpu_supports("htm")
- isel                            // 1   1   1   // __builtin_cpu_supports("isel")
- mma                             // 1*  1*  1*  // __builtin_cpu_supports("mma") [POWER10]
- vsx                             // 1   1   1   // __builtin_cpu_supports("vsx")
- cmpb                            // 1   1   1   // __builtin_cpu_supports("arch_2_05") [POWER6]
- crypto                          // 1   1   1   // __builtin_cpu_supports("arch_2_07") [POWER8]
- direct-move                     // 1   1   1   // __builtin_cpu_supports("arch_2_07") [POWER8]
- float128                        // 1   1   1   // __builtin_cpu_supports("arch_3_00") [POWER9] (UNCERTAIN - needs verification)
- fprnd                           // 1   1   1   // __builtin_cpu_supports("arch_2_05") [POWER6]
- paired-vector-memops            // 1*  1*  0   // __builtin_cpu_supports("arch_3_1") [POWER10]
- pcrel                           // 1*  1*  1*  // __builtin_cpu_supports("arch_3_1") [POWER10]
- popcntd                         // 1   1   1   // __builtin_cpu_supports("arch_2_06") [POWER7]
- power8-vector                   // 1   1   1   // __builtin_cpu_supports("arch_2_07") [POWER8]
- power9-vector                   // 1   1   1   // __builtin_cpu_supports("arch_3_00") [POWER9]
- power10-vector                  // 1   1   0   // __builtin_cpu_supports("arch_3_1") [POWER10]
- prefixed                        // 1*  1*  1*  // __builtin_cpu_supports("arch_3_1") [POWER10]
- aix-shared-lib-tls-model-opt    // 0   1   0   // clang AIX64-only // No runtime check (compile-time only)
- aix-small-local-dynamic-tls     // 0   1   0   // clang AIX64-only // No runtime check (compile-time only)
- aix-small-local-exec-tls        // 0   1   0   // clang AIX64-only // No runtime check (compile-time only)
- crbits                          // 1   1   0   // No runtime check (optimization hint)
- invariant-function-descriptors  // 1   1   0   // No runtime check (AIX ABI feature)
- longcall                        // 1   1   1   // No runtime check (code gen option)
- mfcrf                           // 1   1   1   // Always available (basic instruction, no check needed)
- mfocrf                          // 1   1   0   // GCC uses mfcrf // Always available (basic instruction, no check needed)
- privileged                      // 1   1** 1   // AIX needs -mcpu=power8 // No runtime check available
- rop-protect                     // 1   1** 1   // AIX needs -mcpu=power8 // No runtime check available
- secure-plt                      // 1   1   1   // No runtime check (linking option)
+// feature_name        // clang-linux           gcc-linux-target-attr
+//                              clang-aix
+//                                  gcc-linux          // __builtin_cpu_supports mapping and notes
+ altivec                         // 1   1   1   1      // __builtin_cpu_supports("altivec")
+ htm                             // 1   1   1   1      // __builtin_cpu_supports("htm")
+ isel                            // 1   1   1   1      // __builtin_cpu_supports("isel")
+ mma                             // 1   1   1   1      // __builtin_cpu_supports("mma") [POWER10]
+ vsx                             // 1   1   1   1      // __builtin_cpu_supports("vsx")
+ cmpb                            // 1   1   1   1      // __builtin_cpu_supports("arch_2_05") [POWER6]
+ crypto                          // 1   1   1   1      // __builtin_cpu_supports("arch_2_07") [POWER8]
+ direct-move                     // 1   1   1   1      // __builtin_cpu_supports("arch_2_07") [POWER8]
+ float128                        // 1   1   1   1      // __builtin_cpu_supports("arch_3_00") [POWER9] (UNCERTAIN - needs verification)
+ fprnd                           // 1   1   1   1      // __builtin_cpu_supports("arch_2_05") [POWER6]
+ paired-vector-memops            // 1   1   0   0      // __builtin_cpu_supports("arch_3_1") [POWER10]
+ pcrel                           // 1   1   1   1      // __builtin_cpu_supports("arch_3_1") [POWER10]
+ popcntd                         // 1   1   1   1      // __builtin_cpu_supports("arch_2_06") [POWER7]
+ power8-vector                   // 1   1   1   1      // __builtin_cpu_supports("arch_2_07") [POWER8]
+ power9-vector                   // 1   1   1   1      // __builtin_cpu_supports("arch_3_00") [POWER9]
+ power10-vector                  // 1   1   0   0      // __builtin_cpu_supports("arch_3_1") [POWER10]
+ prefixed                        // 1   1   1   1      // __builtin_cpu_supports("arch_3_1") [POWER10]
+ aix-shared-lib-tls-model-opt    // 0   1   0   0      // clang AIX64-only // No runtime check (compile-time only)
+ aix-small-local-dynamic-tls     // 0   1   0   0      // clang AIX64-only // No runtime check (compile-time only)
+ aix-small-local-exec-tls        // 0   1   0   0      // clang AIX64-only // No runtime check (compile-time only)
+ crbits                          // 1   1   0   0      // No runtime check (optimization hint)
+ invariant-function-descriptors  // 1   1   0   0      // No runtime check (AIX ABI feature)
+ longcall                        // 1   1   1   1      // No runtime check (code gen option)
+ mfcrf                           // 1   1   1   0      // Always available (basic instruction, no check needed)
+ mfocrf                          // 1   1   0   0      // GCC uses mfcrf // Always available (basic instruction, no check needed)
+ privileged                      // 1   1   1   0      // AIX needs -mcpu=power8 // No runtime check available
+ rop-protect                     // 1   1   1   0      // AIX needs -mcpu=power8 // No runtime check available
+ secure-plt                      // 1   1   1   0      // No runtime check (linking option)
 
 // Additional __builtin_cpu_supports strings available but not directly mapped:
 // darn, tar, dscr, ebb (these have direct support but no corresponding target attribute)
