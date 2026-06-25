@@ -2,3 +2,7 @@
 {"id":"fab4b665-aaef-4c93-88e8-5a45530c87e3","ts":"2026-06-24T22:28:41.341Z","path":"/home/wyehia/Source/llvm-project.upstream.new/ppc_target_features.md","version":"1.0.0","taskID":"21d8543d-c9ec-41cd-8de4-67ef87ddf9fa"}
 {"id":"157ff8d0-09f4-47dc-b019-8eb89c6b0dd2","ts":"2026-06-24T22:33:04.071Z","path":"/home/wyehia/Source/llvm-project.upstream.new/ppc_features_analysis.md","version":"1.0.0","taskID":"21d8543d-c9ec-41cd-8de4-67ef87ddf9fa"}
 {"id":"411950c4-bf54-4d51-a188-0bba47ef4a2c","ts":"2026-06-24T22:58:53.019Z","path":"/home/wyehia/Source/llvm-project.upstream.new/ppc_features_analysis.md","version":"1.0.0","taskID":"21d8543d-c9ec-41cd-8de4-67ef87ddf9fa"}
+
+{"id":"37017a12-ff62-47a0-bfc3-2a05db80b308","ts":"2026-06-24T23:32:33.598Z","path":"/home/wyehia/Source/llvm-project.upstream.new/test_ppc_feature2.c","version":"1.0.0","taskID":"6d5644bb-a11a-445e-ab48-6e5c69c846f8"}
+{"id":"95ff14e4-67e5-4b6b-915c-69205bf7fd45","ts":"2026-06-24T23:32:51.705Z","path":"/home/wyehia/Source/llvm-project.upstream.new/test_ppc_features2.sh","version":"1.0.0","taskID":"6d5644bb-a11a-445e-ab48-6e5c69c846f8"}
+{"id":"fbe14f32-c1d0-4a15-8457-a3e2993c36c2","ts":"2026-06-24T23:34:55.460Z","path":"/home/wyehia/Source/llvm-project.upstream.new/ppc_features_analysis2.md","version":"1.0.0","taskID":"6d5644bb-a11a-445e-ab48-6e5c69c846f8"}
