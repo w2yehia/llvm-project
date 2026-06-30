@@ -4,7 +4,7 @@
 
 Extend the `target_clones` attribute on AIX/PowerPC to accept feature strings (e.g., "altivec", "no-altivec") in addition to the currently supported CPU specifications.
 
-**Initial Goal**: Support all 17 PowerPC feature strings with runtime detection
+**Initial Goal**: Support all 14 PowerPC feature strings with runtime detection
 
 **Final Goal**: Support multiple features like `target_clones("default", "altivec", "vsx", "crypto")`
 
@@ -46,7 +46,7 @@ Extend the `target_clones` attribute on AIX/PowerPC to accept feature strings (e
 
 #### FR1: Feature String Parsing
 
-- **FR1.1**: Accept 17 feature strings with runtime detection in target_clones attribute
+- **FR1.1**: Accept 14 feature strings with runtime detection in target_clones attribute
 - **FR1.2**: Accept negated features with "no-" prefix (e.g., "no-altivec", "no-vsx")
 - **FR1.3**: Maintain backward compatibility with existing "cpu=XXX" syntax
 - **FR1.4**: Continue to require "default" option in all target_clones declarations
@@ -55,7 +55,7 @@ Extend the `target_clones` attribute on AIX/PowerPC to accept feature strings (e
 
 #### FR2: Feature Validation
 
-- **FR2.1**: Validate that feature names are one of the 17 recognized PPC features with runtime detection
+- **FR2.1**: Validate that feature names are one of the 14 recognized PPC features with runtime detection
 - **FR2.2**: Reject features without runtime checks with clear error message
 - **FR2.3**: Reject invalid or unsupported feature names with appropriate diagnostics
 - **FR2.4**: Ensure features are appropriate for AIX platform
@@ -91,30 +91,25 @@ Extend the `target_clones` attribute on AIX/PowerPC to accept feature strings (e
 #### NFR3: Documentation
 - Update AttrDocs.td to reflect new capability
 - Add examples showing feature string usage
-- Document all 17 supported features for AIX/PPC
+- Document all 14 supported features for AIX/PPC
 - Explain why some features are excluded from target_clones
 
 ---
 
 ## Feature-to-Runtime Mapping
 
-### Features with Direct __builtin_cpu_supports() Mapping (5 features)
+### Features with Direct __builtin_cpu_supports() Mapping (4 features)
 
 ```cpp
 altivec              → __builtin_cpu_supports("altivec")
 htm                  → __builtin_cpu_supports("htm")
-isel                 → __builtin_cpu_supports("isel")
 mma                  → __builtin_cpu_supports("mma")
 vsx                  → __builtin_cpu_supports("vsx")
 ```
 
-### Features Mapped to ISA Levels (12 features)
+### Features Mapped to ISA Levels (10 features)
 
 ```cpp
-// POWER6 (ISA 2.05)
-cmpb                 → __builtin_cpu_supports("arch_2_05")
-fprnd                → __builtin_cpu_supports("arch_2_05")
-
 // POWER7 (ISA 2.06)
 popcntd              → __builtin_cpu_supports("arch_2_06")
 
@@ -134,7 +129,7 @@ power10-vector       → __builtin_cpu_supports("arch_3_1")
 prefixed             → __builtin_cpu_supports("arch_3_1")
 ```
 
-### Features WITHOUT Runtime Checks (11 features - EXCLUDED from target_clones)
+### Features WITHOUT Runtime Checks (14 features - EXCLUDED from target_clones)
 
 These features are **NOT** supported in target_clones but remain valid for target attribute:
 
@@ -150,7 +145,10 @@ invariant-function-descriptors
 longcall
 secure-plt
 
-// Basic instructions (always available)
+// Basic instructions (always available on AIX)
+cmpb    // POWER6 ISA 2.05 - always available on AIX
+fprnd   // POWER6 ISA 2.05 - always available on AIX
+isel
 mfcrf
 mfocrf
 
@@ -245,20 +243,17 @@ bool PPCTargetInfo::isValidFeatureName(StringRef Name) const {
 }
 
 bool PPCTargetInfo::isValidClonesFeatureName(StringRef Name) const {
-  // Only 17 features with runtime detection are valid for target_clones
+  // Only 14 features with runtime detection are valid for target_clones
   return llvm::StringSwitch<bool>(Name)
-      // Direct mappings (5 features)
+      // Direct mappings (4 features)
       .Case("altivec", true)
       .Case("htm", true)
-      .Case("isel", true)
       .Case("mma", true)
       .Case("vsx", true)
-      // ISA level mappings (12 features)
-      .Case("cmpb", true)
+      // ISA level mappings (10 features)
       .Case("crypto", true)
       .Case("direct-move", true)
       .Case("float128", true)
-      .Case("fprnd", true)
       .Case("paired-vector-memops", true)
       .Case("pcrel", true)
       .Case("popcntd", true)
@@ -610,13 +605,13 @@ For PowerPC targets, ``target_clones`` is supported on AIX only. Only CPU
 For PowerPC targets, ``target_clones`` is supported on AIX only. Options can be:
 
 - CPU specifications: ``cpu=CPU`` (e.g., ``cpu=pwr10``, ``cpu=pwr8``)
-- Feature strings: 17 supported features with runtime detection:
+- Feature strings: 14 supported features with runtime detection:
   
   - Vector features: ``altivec``, ``vsx``, ``power8-vector``, ``power9-vector``, ``power10-vector``
   - POWER8 features: ``crypto``, ``direct-move``, ``htm``
   - POWER9 features: ``float128``
   - POWER10 features: ``mma``, ``paired-vector-memops``, ``pcrel``, ``prefixed``
-  - ISA features: ``cmpb``, ``fprnd``, ``popcntd``, ``isel``
+  - ISA features: ``popcntd``
 
 - Negated features: ``no-<feature>`` (e.g., ``no-altivec``, ``no-vsx``)
 - The required ``default`` option
@@ -668,11 +663,11 @@ def err_ppc_feature_no_runtime_detection : Error<
 ## Implementation Strategy
 
 ### Phase 1: Infrastructure
-**Goal**: Support 17 features with runtime detection
+**Goal**: Support 14 features with runtime detection
 
 1. **Step 1.1**: Implement validation methods in PPC.h/PPC.cpp
    - Add `isValidFeatureName()` for all 28 features
-   - Add `isValidClonesFeatureName()` for 17 features with runtime detection
+   - Add `isValidClonesFeatureName()` for 14 features with runtime detection
    - Add `getBuiltinCpuSupportsName()` helper method
 
 2. **Step 1.2**: Add new diagnostic
@@ -701,10 +696,10 @@ def err_ppc_feature_no_runtime_detection : Error<
    - Handle hyphenated feature names
 
 7. **Step 1.7**: Basic testing
-   - Test features with direct mapping (altivec, vsx, htm, isel, mma)
+   - Test features with direct mapping (altivec, vsx, htm, mma)
    - Test features with ISA mapping (crypto, power8-vector, etc.)
    - Test negated features
-   - Test that features without runtime detection are rejected
+   - Test that features without runtime detection (including isel) are rejected
    - Verify backward compatibility with cpu= syntax
 
 ### Phase 2: Priority and Ordering
@@ -723,7 +718,7 @@ def err_ppc_feature_no_runtime_detection : Error<
 ### Phase 3: Comprehensive Testing
 **Goal**: Ensure robustness
 
-1. **Step 3.1**: Test all 17 features individually
+1. **Step 3.1**: Test all 14 features individually
    - Verify each feature compiles and generates correct resolver
    - Test negated forms
 
@@ -740,9 +735,9 @@ def err_ppc_feature_no_runtime_detection : Error<
 **Goal**: Complete documentation and testing
 
 1. **Step 4.1**: Update AttrDocs.td
-   - Document all 17 supported features
+   - Document all 14 supported features
    - Add comprehensive examples
-   - Explain exclusion of features without runtime detection
+   - Explain exclusion of features without runtime detection (including isel, cmpb, fprnd)
 
 2. **Step 4.2**: Add test coverage
    - Semantic tests in `clang/test/Sema/PowerPC/attr-target-clones.c`
@@ -761,9 +756,9 @@ def err_ppc_feature_no_runtime_detection : Error<
 ## Success Criteria
 
 ### Minimal Success
-- [ ] Accept all 17 feature strings with runtime detection as valid target_clones parameters on AIX
-- [ ] Reject 11 features without runtime detection with clear error message
-- [ ] Accept negated forms (no-feature) for all 17 features
+- [ ] Accept all 14 feature strings with runtime detection as valid target_clones parameters on AIX
+- [ ] Reject 14 features without runtime detection with clear error message
+- [ ] Accept negated forms (no-feature) for all 14 features
 - [ ] Generate correct code for feature variants
 - [ ] Maintain backward compatibility with cpu= syntax
 - [ ] Pass basic test cases for each feature category
@@ -773,9 +768,9 @@ def err_ppc_feature_no_runtime_detection : Error<
 ### Full Success
 - [ ] Proper feature validation and error reporting
 - [ ] Feature priority/ordering implementation based on ISA levels
-- [ ] Correct __builtin_cpu_supports() mapping for all 17 features
+- [ ] Correct __builtin_cpu_supports() mapping for all 14 features
 - [ ] Clear error messages for features without runtime detection
-- [ ] Comprehensive test coverage (all 17 features + error cases)
+- [ ] Comprehensive test coverage (all 14 features + error cases)
 - [ ] Updated documentation with all features listed and exclusions explained
 - [ ] No regressions in existing functionality
 
@@ -845,17 +840,19 @@ def err_ppc_feature_no_runtime_detection : Error<
 
 ### New Methods to Add
 1. ✅ `bool PPCTargetInfo::isValidFeatureName(StringRef Name) const` - validates all 28 features
-2. ✅ `bool PPCTargetInfo::isValidClonesFeatureName(StringRef Name) const` - validates 17 features for target_clones
+2. ✅ `bool PPCTargetInfo::isValidClonesFeatureName(StringRef Name) const` - validates 14 features for target_clones
 3. ✅ `StringRef PPCTargetInfo::getBuiltinCpuSupportsName(StringRef FeatureName) const` - maps to __builtin_cpu_supports()
 
 ### New Diagnostics to Add
 1. ✅ `err_ppc_feature_no_runtime_detection` - error for features without runtime detection
 
 ### Feature Categories
-- **17 features** with __builtin_cpu_supports() runtime checks (supported in target_clones)
-  - 5 with direct mapping: altivec, htm, isel, mma, vsx
-  - 12 with ISA level mapping: cmpb, fprnd, popcntd, crypto, direct-move, power8-vector, float128, power9-vector, paired-vector-memops, pcrel, power10-vector, prefixed
-- **11 features** without runtime checks (rejected in target_clones, allowed in target attribute)
+- **14 features** with __builtin_cpu_supports() runtime checks (supported in target_clones)
+  - 4 with direct mapping: altivec, htm, mma, vsx
+  - 10 with ISA level mapping: popcntd, crypto, direct-move, power8-vector, float128, power9-vector, paired-vector-memops, pcrel, power10-vector, prefixed
+- **14 features** without runtime checks (rejected in target_clones, allowed in target attribute)
+  - Includes isel (always available on AIX)
+  - Includes cmpb and fprnd (POWER6 ISA 2.05 - arch_2_05 always returns true on AIX)
 - **All 28 features** supported in target attribute
 
 ---
