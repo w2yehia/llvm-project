@@ -636,30 +636,56 @@ bool SemaPPC::checkTargetClonesAttr(const SmallVectorImpl<StringRef> &Params,
       if (LHS.empty())
         return Diag(CurLoc, diag::warn_unsupported_target_attribute)
                << Unsupported << None << "" << TargetClones;
-
-      if (LHS.starts_with("cpu=")) {
-        StringRef CPUStr = LHS.drop_front(sizeof("cpu=") - 1);
-        if (!TargetInfo.isValidCPUName(CPUStr))
-          return Diag(CurLoc, diag::warn_unsupported_target_attribute)
-                 << Unknown << CPU << CPUStr << TargetClones;
-        else if (!TargetInfo.validateCpuIs(CPUStr))
-          return Diag(CurLoc, diag::warn_unsupported_target_attribute)
-                 << Unsupported << CPU << CPUStr << TargetClones;
-      } else if (LHS == "default") {
+      if (LHS == "default") {
         HasDefault = true;
       } else {
-        StringRef FeatureName = LHS.starts_with("no-") ? LHS.drop_front(3) : LHS;
-        if (!TargetInfo.isValidClonesFeatureName(FeatureName))
-          return Diag(CurLoc, diag::err_ppc_feature_no_runtime_detection)
-                 << FeatureName;
+        // The feature string can be one of 3:
+        // 1) <feature>
+        // 2) cpu=<CPU>
+        // 3) cpu=<CPU>;<feature>
+        bool HasTwoParts = LHS.contains(';');
+        if (HasTwoParts && !LHS.starts_with("cpu="))
+          return Diag(CurLoc, diag::err_target_clones_invalid_combined_spec) << LHS;
+
+        StringRef CPU, Feature;
+        if (!LHS.starts_with("cpu=")) // (1)
+          Feature = LHS;
+        else if (!HasTwoParts)        // (2)
+          CPU = LHS;
+        else                          // (3)
+          std::tie(CPU, Feature) = LHS.split(';');
+
+        if (HasTwoParts && (CPU.empty() || Feature.empty()))
+          return Diag(CurLoc, diag::err_target_clones_invalid_combined_spec) << LHS;
+
+        if (!Feature.empty()) {
+          StringRef FeatureName = Feature.starts_with("no-") ? Feature.drop_front(3) : Feature;
+          if (!TargetInfo.isValidClonesFeatureName(FeatureName))
+            return Diag(CurLoc, diag::err_ppc_feature_no_runtime_detection) << FeatureName;
+        }
+        if (!CPU.empty()) {
+          StringRef CPUStr = CPU.drop_front(sizeof("cpu=") - 1);
+          if (!TargetInfo.isValidCPUName(CPUStr))
+            return Diag(CurLoc, diag::warn_unsupported_target_attribute)
+                   << Unknown << Specifier::CPU << CPUStr << TargetClones;
+          else if (!TargetInfo.validateCpuIs(CPUStr))
+            return Diag(CurLoc, diag::warn_unsupported_target_attribute)
+                   << Unsupported << Specifier::CPU << CPUStr << TargetClones;
+        }
+        // Now fixup the CPU value and update LHS to point to a fixed string.
+        SmallString<64> Rename;
+        if (!CPU.empty()) {
+          Rename.append("cpu=");
+          Rename.append(
+              llvm::PPC::normalizeCPUName(CPU.drop_front(sizeof("cpu=") - 1)));
+          if (!Feature.empty()) {
+            Rename.append(";");
+            Rename.append(Feature);
+          }
+          LHS = Rename.str();
+        }
       }
-      SmallString<64> CPU;
-      if (LHS.starts_with("cpu=")) {
-        CPU.append("cpu=");
-        CPU.append(
-            llvm::PPC::normalizeCPUName(LHS.drop_front(sizeof("cpu=") - 1)));
-        LHS = CPU.str();
-      }
+
       if (llvm::is_contained(NewParams, LHS)) {
         Diag(CurLoc, diag::warn_target_clone_duplicate_options);
         continue;

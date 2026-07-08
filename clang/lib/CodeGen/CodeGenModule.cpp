@@ -5014,6 +5014,12 @@ void CodeGenModule::emitMultiVersionFunctions() {
               if (getTarget().getTriple().isX86()) {
                 TC->getX86Feature(Feats, I);
                 Options.emplace_back(Func, Feats, TC->getX86Architecture(I));
+              } else if (getTarget().getTriple().isOSAIX()) {
+                StringRef CPU, Feature;
+                TC->getPPCFeatureAndCPU(CPU, Feature, I);
+                if (!Feature.empty())
+                  Feats.push_back(Feature);
+                Options.emplace_back(Func, Feats, CPU.empty() ? std::nullopt : std::optional<StringRef>(CPU));
               } else {
                 char Delim = getTarget().getTriple().isAArch64() ? '+' : ',';
                 TC->getFeatures(Feats, I, Delim);

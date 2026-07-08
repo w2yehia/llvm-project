@@ -3689,6 +3689,20 @@ def TargetClones : InheritableAttr {
       Out.push_back(getFeatureStr(Index));
     }
 
+    void getPPCFeatureAndCPU(StringRef &CPU, StringRef &Feature, unsigned Index) const {
+      if (isDefaultVersion(Index))
+        return;
+      StringRef Input = getFeatureStr(Index);
+      if (Input.contains(';')) {
+        std::tie(CPU, Feature) = Input.split(';');
+        CPU = CPU.drop_front(sizeof("cpu=") - 1);
+      }
+      else if (Input.starts_with("cpu="))
+        CPU = Input.drop_front(sizeof("cpu=") - 1);
+      else
+        Feature = Input;
+    }
+
     // Given an index into the 'featuresStrs' sequence, compute a unique
     // ID to be used with function name mangling for the associated variant.
     // This mapping is necessary due to a requirement that the mangling ID

@@ -11519,6 +11519,9 @@ def err_ppc_invalid_arg_type : Error<
 def err_ppc_feature_no_runtime_detection : Error<
   "feature '%0' cannot be used with 'target_clones' because it has no "
   "runtime detection; use 'target' attribute instead">;
+def err_target_clones_invalid_combined_spec : Error<
+  "invalid combined specification '%0' in 'target_clones' attribute; "
+  "expected 'cpu=<cpu>;feature' format">;
 
 def err_x86_builtin_invalid_rounding : Error<
   "invalid rounding argument">;

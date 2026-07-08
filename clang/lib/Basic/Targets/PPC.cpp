@@ -689,6 +689,12 @@ ParsedTargetAttr PPCTargetInfo::parseTargetAttr(StringRef Features) const {
   SmallVector<StringRef, 1> AttrFeatures;
   Features.split(AttrFeatures, ",");
 
+  if (AttrFeatures.size() == 1) {
+    AttrFeatures.clear();
+    Features.split(AttrFeatures, ';');
+  } else
+    assert(!Features.contains(';') && "cannot mix ; and , on a target[_clone]");
+
   // Grab the various features and prepend a "+" to turn on the feature to
   // the backend and add them to our existing set of features.
   for (auto &Feature : AttrFeatures) {
@@ -717,40 +723,38 @@ ParsedTargetAttr PPCTargetInfo::parseTargetAttr(StringRef Features) const {
 llvm::APInt PPCTargetInfo::getFMVPriority(ArrayRef<StringRef> Features) const {
   if (Features.empty())
     return llvm::APInt(32, 0);
+
   assert(Features.size() == 1 && "one feature/cpu per clone on PowerPC");
   ParsedTargetAttr ParsedAttr = parseTargetAttr(Features[0]);
 
   // Priority scheme: Features requiring POWERXX are higher than cpu=pwrXX
   // but lower than cpu=pwr(XX+1). This ensures proper version selection.
   // Example: mma (POWER10 feature) > cpu=pwr10 > power9-vector (POWER9 feature)
-
-  if (!ParsedAttr.CPU.empty()) {
-    int Priority = llvm::StringSwitch<int>(ParsedAttr.CPU)
+  int Priority = llvm::StringSwitch<int>(ParsedAttr.CPU)
                        .Case("pwr7", 100)
                        .Case("pwr8", 200)
                        .Case("pwr9", 300)
                        .Case("pwr10", 400)
                        .Case("pwr11", 500)
-                       .Default(0);
-    return llvm::APInt(32, Priority);
-  }
+                       .Default(0); // if ParsedAttr.CPU is empty
 
   // Feature strings: priority between cpu=pwrN and cpu=pwr(N+1)
   if (!ParsedAttr.Features.empty()) {
+    assert(ParsedAttr.Features.size() == 1);
     StringRef Feature = ParsedAttr.Features[0];
     // Remove leading '+' or '-'
     if (Feature.starts_with("+") || Feature.starts_with("-"))
       Feature = Feature.drop_front(1);
 
-    int Priority = llvm::StringSwitch<int>(Feature)
+    Priority = std::max(Priority,
+                        llvm::StringSwitch<int>(Feature)
 #define PPC_AIX_CLONES_FEATURE(FEATURE_NAME, _, PRIORITY)                      \
   .Case(FEATURE_NAME, PRIORITY)
 #include "llvm/TargetParser/PPCTargetParser.def"
-                       .Default(0);
-    return llvm::APInt(32, Priority);
+                       .Default(0));
   }
 
-  return llvm::APInt(32, 0);
+  return llvm::APInt(32, Priority);
 }
 
 // Make sure that registers are added in the correct array index which should be

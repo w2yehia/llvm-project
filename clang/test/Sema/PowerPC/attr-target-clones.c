@@ -131,6 +131,25 @@ gh173684_empty_attribute_args(void);
 void __attribute__((target_clones))
 gh173684_empty_attribute_args_2(void);
 
+// expected-error@+1 {{invalid combined specification 'cpu=pwr9;' in 'target_clones' attribute; expected 'cpu=<cpu>;feature' format}}
+void __attribute__((target_clones("default", "cpu=pwr9;")))
+bad_two_part(void);
+
+// expected-error@+1 {{invalid combined specification ';vsx' in 'target_clones' attribute; expected 'cpu=<cpu>;feature' format}}
+void __attribute__((target_clones("default", ";vsx")))
+bad_two_part(void);
+
+// expected-error@+1 {{invalid combined specification 'vsx;cpu=pwr9' in 'target_clones' attribute; expected 'cpu=<cpu>;feature' format}}
+void __attribute__((target_clones("default", "altivec,vsx;cpu=pwr9")))
+bad_two_part(void);
+
+// corret usage
+void __attribute__((target_clones("altivec,default,vsx,cpu=pwr10;mma,cpu=pwr8")))
+good_two_part(void);
+
+void __attribute__((target_clones("altivec","default","vsx","cpu=pwr10;no-mma","cpu=pwr10")))
+good_two_part2(void);
+
 // TODO: Consider combining some of these tests into fewer test cases with multiple features
 // e.g., target_clones("feature1", "feature2", "feature3", ..., "default") to test
 // feature1, feature2, feature3 all in one declaration instead of separate functions
