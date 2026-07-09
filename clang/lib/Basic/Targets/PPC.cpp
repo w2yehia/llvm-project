@@ -728,10 +728,7 @@ ParsedTargetAttr PPCTargetInfo::parseTargetAttr(StringRef Features) const {
 llvm::APInt PPCTargetInfo::getFMVPriority(ArrayRef<StringRef> Features) const {
   if (Features.empty())
     return llvm::APInt(32, 0);
-  /*llvm::dbgs() << "getFMVPriority({";
-  for (StringRef S : Features)
-    llvm::dbgs() <<  S << " ";
-  llvm::dbgs() << "})\n"; */
+
   assert((Features.size() == 1 || Features.size() == 2) && "one feature and/or one cpu per clone on PowerPC");
   StringRef CPUStr, FeatureStr;
   if (Features[0].starts_with("cpu="))
@@ -773,7 +770,6 @@ llvm::APInt PPCTargetInfo::getFMVPriority(ArrayRef<StringRef> Features) const {
 #include "llvm/TargetParser/PPCTargetParser.def"
                        .Default(0);
   }
-  //llvm::dbgs() << "getFMVPriority = " << CPUPriority << " " << FeaturePriority << "\n";
   return llvm::APInt(32, std::max(CPUPriority, FeaturePriority));
 }
 
