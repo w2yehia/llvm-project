@@ -3138,29 +3138,15 @@ void CodeGenFunction::EmitPPCAIXMultiVersionResolver(
     //
     // if.version_n:
     //   ret ptr @foo_version_n
-    assert(RO.Features.size() == 1 &&
+    assert(RO.Features.size() <= 1 &&
            "for now one feature requirement per version");
-
-    StringRef FullSpec = RO.Features[0];
     
     // Parse specification into CPU and/or feature components
     StringRef CPUSpec, FeatureSpec;
-    if (FullSpec.contains(';')) {
-      // Combined specification: cpu=XXX;feature
-      SmallVector<StringRef, 2> Components;
-      FullSpec.split(Components, ';', -1, false);
-      assert(Components.size() == 2 && 
-             "combined spec must have exactly 2 components");
-      CPUSpec = Components[0].trim();
-      FeatureSpec = Components[1].trim();
-      assert(CPUSpec.starts_with("cpu=") && "first component must be CPU");
-    } else if (FullSpec.starts_with("cpu=")) {
-      // CPU-only specification
-      CPUSpec = FullSpec;
-    } else {
-      // Feature-only specification
-      FeatureSpec = FullSpec;
-    }
+    if (RO.Architecture)
+      CPUSpec = RO.Architecture;
+    if (!RO.Features.empty())
+      FeatureSpec = RO.Features[0];
     
     llvm::Value *CPUCondition = nullptr;
     llvm::Value *FeatureCondition = nullptr;
