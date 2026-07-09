@@ -728,10 +728,10 @@ ParsedTargetAttr PPCTargetInfo::parseTargetAttr(StringRef Features) const {
 llvm::APInt PPCTargetInfo::getFMVPriority(ArrayRef<StringRef> Features) const {
   if (Features.empty())
     return llvm::APInt(32, 0);
-  llvm::dbgs() << "getFMVPriority({";
+  /*llvm::dbgs() << "getFMVPriority({";
   for (StringRef S : Features)
     llvm::dbgs() <<  S << " ";
-  llvm::dbgs() << "})\n";
+  llvm::dbgs() << "})\n"; */
   assert((Features.size() == 1 || Features.size() == 2) && "one feature and/or one cpu per clone on PowerPC");
   StringRef CPUStr, FeatureStr;
   if (Features[0].starts_with("cpu="))
@@ -762,8 +762,10 @@ llvm::APInt PPCTargetInfo::getFMVPriority(ArrayRef<StringRef> Features) const {
   // Feature strings: priority between cpu=pwrN and cpu=pwr(N+1)
   if (!FeatureStr.empty()) {
     // Remove leading '+' or '-'
-    if (FeatureStr.starts_with("+") || FeatureStr.starts_with("-"))
-      FeatureStr = FeatureStr.drop_front(1);
+    //if (FeatureStr.starts_with("+") || FeatureStr.starts_with("-"))
+    //  FeatureStr = FeatureStr.drop_front(1);
+    if (FeatureStr.starts_with("no-"))
+      FeatureStr = FeatureStr.drop_front(sizeof("no-")-1);
 
     FeaturePriority = llvm::StringSwitch<int>(FeatureStr)
 #define PPC_AIX_CLONES_FEATURE(FEATURE_NAME, _, PRIORITY)                      \
@@ -771,7 +773,7 @@ llvm::APInt PPCTargetInfo::getFMVPriority(ArrayRef<StringRef> Features) const {
 #include "llvm/TargetParser/PPCTargetParser.def"
                        .Default(0);
   }
-  llvm::dbgs() << "getFMVPriority = " << CPUPriority << " " << FeaturePriority << "\n";
+  //llvm::dbgs() << "getFMVPriority = " << CPUPriority << " " << FeaturePriority << "\n";
   return llvm::APInt(32, std::max(CPUPriority, FeaturePriority));
 }
 

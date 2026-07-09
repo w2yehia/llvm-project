@@ -3144,7 +3144,7 @@ void CodeGenFunction::EmitPPCAIXMultiVersionResolver(
     // Parse specification into CPU and/or feature components
     StringRef CPUSpec, FeatureSpec;
     if (RO.Architecture)
-      CPUSpec = RO.Architecture;
+      CPUSpec = *RO.Architecture;
     if (!RO.Features.empty())
       FeatureSpec = RO.Features[0];
     
