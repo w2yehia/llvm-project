@@ -150,12 +150,10 @@ void AIXABIInfo::appendAttributeMangling(StringRef AttrStr,
 
   const TargetInfo &TI = CGT.getTarget();
   ParsedTargetAttr Info = TI.parseTargetAttr(AttrStr);
+  assert(!Info.CPU.empty() || !Info.Features.empty());
 
-  if (!Info.CPU.empty()) {
-    assert(Info.Features.empty() && "cannot have both a CPU and a feature");
+  if (!Info.CPU.empty()) 
     Out << ".cpu_" << Info.CPU;
-    return;
-  }
 
   // Handle feature strings
   if (!Info.Features.empty()) {
@@ -168,10 +166,7 @@ void AIXABIInfo::appendAttributeMangling(StringRef AttrStr,
     std::replace(MangledName.begin(), MangledName.end(), '-', '_');
 
     Out << "." << (Feature.starts_with("-") ? "no_" : "") << MangledName;
-    return;
   }
-
-  llvm_unreachable("Invalid target_clones parameter");
 }
 
 class AIXTargetCodeGenInfo : public TargetCodeGenInfo {

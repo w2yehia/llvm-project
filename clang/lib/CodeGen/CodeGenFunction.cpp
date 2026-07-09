@@ -3113,6 +3113,14 @@ void CodeGenFunction::EmitPPCAIXMultiVersionResolver(
   llvm::BasicBlock *CurBlock = createBasicBlock("entry", Resolver);
 
   SmallVector<std::pair<llvm::Value *, llvm::BasicBlock *>, 3> PhiArgs;
+  int i = 0;
+  for (const FMVResolverOption &RO : Options) {
+    llvm::dbgs() << "i=" << i << ": " << RO.Architecture << " , {";
+    for (auto S : RO.Features)
+      llvm::dbgs() << S << " ";
+    llvm::dbgs() << "}\n";
+    ++i; 
+  }
   for (const FMVResolverOption &RO : Options) {
     Builder.SetInsertPoint(CurBlock);
     // The 'default' or 'generic' case.
@@ -3133,54 +3141,81 @@ void CodeGenFunction::EmitPPCAIXMultiVersionResolver(
     assert(RO.Features.size() == 1 &&
            "for now one feature requirement per version");
 
-    StringRef FeatureStr = RO.Features[0];
-    StringRef BuiltinCpuSupportsArg;
-    bool IsNegated = false;
-
-    if (FeatureStr.starts_with("cpu=")) {
-      // CPU specification - map to ISA level
-      StringRef CPU = FeatureStr.split("=").second.trim();
-      BuiltinCpuSupportsArg = llvm::StringSwitch<StringRef>(CPU)
-                                  .Case("pwr7", "arch_2_06")
-                                  .Case("pwr8", "arch_2_07")
-                                  .Case("pwr9", "arch_3_00")
-                                  .Case("pwr10", "arch_3_1")
-                                  .Case("pwr11", "arch_3_1")
-                                  .Default("error");
+    StringRef FullSpec = RO.Features[0];
+    
+    // Parse specification into CPU and/or feature components
+    StringRef CPUSpec, FeatureSpec;
+    if (FullSpec.contains(';')) {
+      // Combined specification: cpu=XXX;feature
+      SmallVector<StringRef, 2> Components;
+      FullSpec.split(Components, ';', -1, false);
+      assert(Components.size() == 2 && 
+             "combined spec must have exactly 2 components");
+      CPUSpec = Components[0].trim();
+      FeatureSpec = Components[1].trim();
+      assert(CPUSpec.starts_with("cpu=") && "first component must be CPU");
+    } else if (FullSpec.starts_with("cpu=")) {
+      // CPU-only specification
+      CPUSpec = FullSpec;
     } else {
-      // Feature strings arrive here already normalized:
-      // - Positive features: just the name (e.g., "altivec")
-      // - Negated features: "no-" prefix (e.g., "no-altivec")
-      if (FeatureStr.starts_with("no-")) {
+      // Feature-only specification
+      FeatureSpec = FullSpec;
+    }
+    
+    llvm::Value *CPUCondition = nullptr;
+    llvm::Value *FeatureCondition = nullptr;
+    
+    // Generate CPU check if present
+    if (!CPUSpec.empty()) {
+      StringRef CPU = CPUSpec.drop_front(4).trim();
+      StringRef CPUCheck = llvm::StringSwitch<StringRef>(CPU)
+                               .Case("pwr7", "arch_2_06")
+                               .Case("pwr8", "arch_2_07")
+                               .Case("pwr9", "arch_3_00")
+                               .Case("pwr10", "arch_3_1")
+                               .Case("pwr11", "arch_3_1")
+                               .Default("error");
+      assert(getContext().getTargetInfo().validateCpuSupports(CPUCheck));
+      CPUCondition = EmitPPCBuiltinCpu(Builtin::BI__builtin_cpu_supports,
+                                       Builder.getInt1Ty(), CPUCheck);
+    }
+    
+    // Generate feature check if present
+    if (!FeatureSpec.empty()) {
+      bool IsNegated = false;
+      if (FeatureSpec.starts_with("no-")) {
         IsNegated = true;
-        FeatureStr = FeatureStr.drop_front(3);
+        FeatureSpec = FeatureSpec.drop_front(3);
       }
-
-      // Map feature names to __builtin_cpu_supports() strings
-      BuiltinCpuSupportsArg =
-          llvm::StringSwitch<StringRef>(FeatureStr)
+      
+      StringRef FeatureCheck =
+          llvm::StringSwitch<StringRef>(FeatureSpec)
 #define PPC_AIX_CLONES_FEATURE(FEATURE_NAME, AIX_BUILTIN_CPU_SUPPORTS_NAME, _) \
   .Case(FEATURE_NAME, AIX_BUILTIN_CPU_SUPPORTS_NAME)
 #include "llvm/TargetParser/PPCTargetParser.def"
-              // Features without runtime checks return empty string
               .Default("");
-
-      // All features in target_clones must have runtime detection
-      assert(!BuiltinCpuSupportsArg.empty() &&
-             "feature without runtime detection should have been rejected in "
-             "Sema");
+      
+      assert(!FeatureCheck.empty() && 
+             "feature without runtime detection should have been rejected in Sema");
+      assert(getContext().getTargetInfo().validateCpuSupports(FeatureCheck));
+      
+      FeatureCondition = EmitPPCBuiltinCpu(Builtin::BI__builtin_cpu_supports,
+                                           Builder.getInt1Ty(), FeatureCheck);
+      
+      if (IsNegated) {
+        FeatureCondition = Builder.CreateNot(FeatureCondition, "neg");
+      }
     }
-
-    assert(getContext().getTargetInfo().validateCpuSupports(
-        BuiltinCpuSupportsArg));
-
-    llvm::Value *Condition =
-        EmitPPCBuiltinCpu(Builtin::BI__builtin_cpu_supports,
-                          Builder.getInt1Ty(), BuiltinCpuSupportsArg);
-
-    // Negate the condition if this is a negated feature
-    if (IsNegated) {
-      Condition = Builder.CreateNot(Condition, "neg");
+    
+    // Combine conditions with AND if both present
+    llvm::Value *Condition;
+    if (CPUCondition && FeatureCondition) {
+      Condition = Builder.CreateAnd(CPUCondition, FeatureCondition);
+    } else if (CPUCondition) {
+      Condition = CPUCondition;
+    } else {
+      assert(FeatureCondition && "must have at least one condition");
+      Condition = FeatureCondition;
     }
 
     llvm::BasicBlock *ThenBlock = createBasicBlock("if.version", Resolver);

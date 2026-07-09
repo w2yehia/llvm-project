@@ -3689,16 +3689,16 @@ def TargetClones : InheritableAttr {
       Out.push_back(getFeatureStr(Index));
     }
 
-    void getPPCFeatureAndCPU(StringRef &CPU, StringRef &Feature, unsigned Index) const {
+    void getPPCFeatureAndCPU(StringRef &CPU, StringRef &Feature, unsigned Index, bool dropCPUEqual = true) const {
       if (isDefaultVersion(Index))
         return;
       StringRef Input = getFeatureStr(Index);
       if (Input.contains(';')) {
         std::tie(CPU, Feature) = Input.split(';');
-        CPU = CPU.drop_front(sizeof("cpu=") - 1);
+        CPU = dropCPUEqual ? CPU.drop_front(sizeof("cpu=") - 1) : CPU;
       }
       else if (Input.starts_with("cpu="))
-        CPU = Input.drop_front(sizeof("cpu=") - 1);
+        CPU = dropCPUEqual ? Input.drop_front(sizeof("cpu=") - 1) : Input;
       else
         Feature = Input;
     }

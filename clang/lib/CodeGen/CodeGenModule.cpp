@@ -5016,7 +5016,12 @@ void CodeGenModule::emitMultiVersionFunctions() {
                 Options.emplace_back(Func, Feats, TC->getX86Architecture(I));
               } else if (getTarget().getTriple().isOSAIX()) {
                 StringRef CPU, Feature;
-                TC->getPPCFeatureAndCPU(CPU, Feature, I);
+                // StringRef FMVResolverOption::Architecture needs to keep the
+                // "cpu=" prefix because getFMVPriority puts all features and
+                // the Architecture string in a single StringRef array, making
+                // it indistinguishable from feature strings (We can but don't
+                // want to call TargetInfo::isValidCPUName to distinguish).
+                TC->getPPCFeatureAndCPU(CPU, Feature, I, /*dropCPUEqual*/false);
                 if (!Feature.empty())
                   Feats.push_back(Feature);
                 Options.emplace_back(Func, Feats, CPU.empty() ? std::nullopt : std::optional<StringRef>(CPU));
