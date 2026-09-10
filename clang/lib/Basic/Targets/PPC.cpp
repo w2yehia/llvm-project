@@ -763,11 +763,15 @@ llvm::APInt PPCTargetInfo::getFMVPriority(ArrayRef<StringRef> Features) const {
     if (Feature.starts_with("+") || Feature.starts_with("-"))
       Feature = Feature.drop_front(1);
 
-    // Check if this is a negative category 2 feature (highest priority)
+    // Check if this is a negative category 3 feature (highest priority)
     if (IsNegated && llvm::PPC::canDisableFeatureOnAIX(Feature))
-      return llvm::APInt(32, 600);
+      return llvm::StringSwitch<int>("NEGATIVE-FEATURE")
+#define PPC_AIX_CLONES_CPU(CPU_NAME, _, PRIORITY)                      \
+  .Case(CPU_NAME, PRIORITY)
+#include "llvm/TargetParser/PPCTargetParser.def"
+                       .Default(0);
 
-    // Regular feature priority (positive or negative category 1)
+    // Regular feature priority (positive or negative category 2)
     int Priority = llvm::StringSwitch<int>(Feature)
 #define PPC_AIX_CLONES_FEATURE(FEATURE_NAME, _, PRIORITY)                      \
   .Case(FEATURE_NAME, PRIORITY)
