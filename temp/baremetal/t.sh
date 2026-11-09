@@ -9,18 +9,23 @@ cat <<EOT >real_main.c
 
 extern char *allocate(uint64_t Size);
 
-volatile int x = 10;
-volatile int ar;
+static volatile int x = 10;
+static volatile int ar;
+static uint64_t ProfSize = 0;
+static char *Memory;
 
 __attribute__((no_profile_instrument_function))
 static int dump_profile(void) {
-  char *Memory = allocate(__llvm_profile_get_size_for_buffer());
+#ifdef __LLVM_INSTR_PROFILE_GENERATE
+  ProfSize = __llvm_profile_get_size_for_buffer();
+
+  Memory = allocate(ProfSize);
   if (!Memory)
     return -1; // buffer too small
 
   if (__llvm_profile_write_buffer(Memory) != 0)
     return -2; // serialization failed
-
+#endif
   return 0;
 }
 
@@ -31,13 +36,46 @@ int real_main(void) {
      ar += i;
   return dump_profile();
 }
+
+#ifdef __LLVM_INSTR_PROFILE_GENERATE
+__attribute__((visibility("default")))
+char *get_buffer(uint64_t *Size) {
+  *Size = ProfSize;
+  return Memory;
+}
+#endif
 EOT
 
 # Component 1: driver (NOT profiled).
 cat <<EOT >main.c
-extern int real_main(void);
+#include <stdint.h>
+#include <stdio.h>
 
-int main() { return real_main(); }
+extern int real_main(void);
+extern char *get_buffer(uint64_t*);
+int main() {
+  int rc = real_main();
+#ifdef WRITE_PROFILE_TO_DISK
+  uint64_t size = 0;
+  char *prof_buf = get_buffer(&size);
+
+  FILE *F = fopen("default.profraw", "wb");
+  if (!F) {
+    perror("fopen default.profraw");
+    return 1;
+  }
+  if (fwrite(prof_buf, 1, size, F) != size) {
+    perror("fwrite default.profraw");
+    fclose(F);
+    return 1;
+  }
+  if (fclose(F) != 0) {
+    perror("fclose default.profraw");
+    return 1;
+  }
+#endif
+  return rc;
+}
 EOT
 
 # Component 3: helper (see below).
@@ -83,6 +121,27 @@ $CLANG $COMMON -shared -fuse-ld=lld \
   $($CLANG --print-file-name=libclang_rt.profile.a)
 
 # (1) main.c: not profiled, calls real_main from libreal_main.so.
-$CLANG main.c -o main -L. -lreal_main -Wl,-rpath,'$ORIGIN'
+$CLANG -DWRITE_PROFILE_TO_DISK main.c -o main -L. -lreal_main -Wl,-rpath,'$ORIGIN'
 
+rm -f default.profraw
 ./main; echo "exit code: $?"
+
+# Sanity check: the raw profile must be readable by llvm-profdata.
+BIN=$(dirname $CLANG)
+$BIN/llvm-profdata merge default.profraw -o default.profdata
+$BIN/llvm-profdata show --all-functions --counts default.profdata
+
+$CLANG $COMMON -fPIC -fprofile-use=default.profdata -c real_main.c -o real_main.profuse.o
+$CLANG $COMMON -shared -fuse-ld=lld real_main.profuse.o helper.o -o libreal_main.so
+$CLANG main.c -o main -L. -lreal_main -Wl,-rpath,'$ORIGIN'
+./main; echo "exit code: $?"
+
+# Verify the profile was actually applied: no stale/missing-profile warnings
+# (-Werror), and real_main must carry !prof metadata (entry count + branch weights).
+$CLANG $COMMON -fPIC -fprofile-use=default.profdata \
+  -Werror=profile-instr-out-of-date -Werror=profile-instr-missing \
+  -S -emit-llvm real_main.c -o real_main.profuse.ll
+grep -q 'function_entry_count' real_main.profuse.ll
+grep -q 'branch_weights' real_main.profuse.ll
+echo "profile-use check: OK"
+
