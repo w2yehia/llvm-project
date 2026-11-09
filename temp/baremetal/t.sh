@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
-CLANG=/home/wyehia/Source/build.upstream.new/bin/clang
+
+BUILD=/home/wyehia/Source/build.upstream.new
+CLANG=$BUILD/bin/clang
 
 # Component 2: real_main (freestanding, instrumented) is the program we want to profile
 cat <<EOT >real_main.c
@@ -106,6 +108,7 @@ EOT
 
 COMMON="-O2 -ffreestanding -fno-builtin -fno-stack-protector -nostdlib -fvisibility=hidden"
 
+#set -x
 # (3) helper.c: compiled WITHOUT instrumentation (counters in memcpy/memset
 # would change while the profile is being written).
 $CLANG $COMMON -fPIC -c helper.c -o helper.o
@@ -116,12 +119,19 @@ $CLANG $COMMON -fPIC -fprofile-generate -fprofile-update=single \
 
 # Link (2) and (3) into ONE shared library, together with the baremetal
 # profile runtime (libclang_rt.profile.a, found via the resource dir).
-$CLANG $COMMON -shared -fuse-ld=lld \
-  real_main.o helper.o -o libreal_main.so \
-  $($CLANG --print-file-name=libclang_rt.profile.a)
+$BUILD/bin/ld.lld \
+  -z relro \
+  --hash-style=gnu \
+  --eh-frame-hdr \
+  -m elf64lppc \
+  -shared \
+  -o libreal_main.so \
+  real_main.o helper.o $BUILD/lib/clang/24/lib/powerpc64le-unknown-linux-gnu/libclang_rt.profile.a
 
 # (1) main.c: not profiled, calls real_main from libreal_main.so.
 $CLANG -DWRITE_PROFILE_TO_DISK main.c -o main -L. -lreal_main -Wl,-rpath,'$ORIGIN'
+
+set +x
 
 rm -f default.profraw
 ./main; echo "exit code: $?"
